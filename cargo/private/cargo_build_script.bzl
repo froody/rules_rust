@@ -13,6 +13,7 @@ load(
     "//rust/private:rustc.bzl",
     "get_compilation_mode_opts",
     "get_linker_and_args",
+    "get_rustc_env",
 )
 
 # buildifier: disable=bzl-visibility
@@ -398,6 +399,8 @@ def _cargo_build_script_impl(ctx):
         # OUT_DIR is set by the runner itself, rather than on the action.
     })
 
+
+
     # Allow the user to override the number of jobs for the build script.
     if "NUM_JOBS" not in env:
         env["NUM_JOBS"] = 1
@@ -469,6 +472,25 @@ def _cargo_build_script_impl(ctx):
 
     # Add environment variables from the Rust toolchain.
     env.update(toolchain.env)
+
+    rustc_env = get_rustc_env(ctx.attr, toolchain, name_to_crate_name(pkg_name))
+    valid_keys = [
+        "CARGO_PKG_AUTHORS",
+        "CARGO_PKG_DESCRIPTION",
+        "CARGO_PKG_HOMEPAGE",
+        "CARGO_PKG_LICENSE",
+        "CARGO_PKG_REPOSITORY",
+        "RUSTDOC",
+    ]
+
+    for key in valid_keys:
+        if key in rustc_env:
+            env[key] = rustc_env[key]
+        else:
+            if key not in env:
+                env[key] = ""
+
+    print("env: {}".format(env))
 
     known_variables = {}
 

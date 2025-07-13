@@ -60,6 +60,7 @@ SUPPORTED_T2_PLATFORM_TRIPLES = {
     "thumbv7em-none-eabi": _support(std = True, host_tools = False),
     "thumbv8m.main-none-eabi": _support(std = True, host_tools = False),
     "wasm32-unknown-unknown": _support(std = True, host_tools = False),
+    "wasm32-unknown-emscripten": _support(std = True, host_tools = False),
     "wasm32-wasip1": _support(std = True, host_tools = False),
     "x86_64-apple-ios": _support(std = True, host_tools = False),
     "x86_64-linux-android": _support(std = True, host_tools = False),
@@ -163,7 +164,7 @@ _SYSTEM_TO_BINARY_EXT = {
     "darwin": "",
     "eabi": "",
     "eabihf": "",
-    "emscripten": ".js",
+    "emscripten": ".wasm",
     "freebsd": "",
     "fuchsia": "",
     "ios": "",
@@ -187,7 +188,7 @@ _SYSTEM_TO_STATICLIB_EXT = {
     "darwin": ".a",
     "eabi": ".a",
     "eabihf": ".a",
-    "emscripten": ".js",
+    "emscripten": ".wasm",
     "freebsd": ".a",
     "fuchsia": ".a",
     "ios": ".a",
@@ -208,7 +209,7 @@ _SYSTEM_TO_DYLIB_EXT = {
     "darwin": ".dylib",
     "eabi": ".so",
     "eabihf": ".so",
-    "emscripten": ".js",
+    "emscripten": ".wasm",
     "freebsd": ".so",
     "fuchsia": ".so",
     "ios": ".dylib",
@@ -306,6 +307,9 @@ def system_to_constraints(system):
         fail("System \"{}\" is not supported by rules_rust".format(system))
 
     sys_suffix = _SYSTEM_TO_BUILTIN_SYS_SUFFIX[system]
+
+    if sys_suffix == None:
+        sys_suffix = "none"
 
     return ["@platforms//os:{}".format(sys_suffix)]
 
@@ -418,6 +422,11 @@ def triple_to_constraint_set(target_triple):
             "@platforms//os:wasi",
         ]
     if target_triple == "wasm32-unknown-unknown":
+        return [
+            "@platforms//cpu:wasm32",
+            "@platforms//os:none",
+        ]
+    if target_triple == "wasm32-unknown-emscripten":
         return [
             "@platforms//cpu:wasm32",
             "@platforms//os:none",

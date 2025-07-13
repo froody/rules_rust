@@ -232,6 +232,7 @@ def _rust_binary_impl(ctx):
         output_filename = ctx.attr.binary_name
     else:
         output_filename = ctx.label.name
+    print("Output filename for binary: {} - {}".format(output_filename, toolchain.binary_ext))
     output = ctx.actions.declare_file(output_filename + toolchain.binary_ext)
 
     deps = transform_deps(ctx.attr.deps)

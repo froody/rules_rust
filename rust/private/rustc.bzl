@@ -110,7 +110,7 @@ is_proc_macro_dep_enabled = rule(
     build_setting = config.bool(flag = True),
 )
 
-def _get_rustc_env(attr, toolchain, crate_name):
+def get_rustc_env(attr, toolchain, crate_name):
     """Gathers rustc environment variables
 
     Args:
@@ -129,6 +129,9 @@ def _get_rustc_env(attr, toolchain, crate_name):
         pre = ""
 
     result = {
+        "PATH":"/usr/bin:/bin:/usr/local/bin:/home/tbirch/src/emsdk:/home/tbirch/src/emsdk/upstream/emscripten",
+        "EMSDK":"/home/tbirch/src/emsdk",
+        "EMSDK_NODE":"/home/tbirch/src/emsdk/node/20.18.0_64bit/bin/node",
         "CARGO_CFG_TARGET_ARCH": "" if toolchain.target_arch == None else toolchain.target_arch,
         "CARGO_CFG_TARGET_OS": "" if toolchain.target_os == None else toolchain.target_os,
         "CARGO_CRATE_NAME": crate_name,
@@ -884,7 +887,7 @@ def construct_arguments(
     output_dir = getattr(crate_info.output, "dirname", None)
     linker_script = getattr(file, "linker_script", None)
 
-    env = _get_rustc_env(attr, toolchain, crate_info.name)
+    env = get_rustc_env(attr, toolchain, crate_info.name)
 
     # Wrapper args first
     process_wrapper_flags = ctx.actions.args()
@@ -2170,6 +2173,7 @@ def _add_native_link_flags(args, dep_info, linkstamp_outs, ambiguous_libs, crate
 
     use_pic = _should_use_pic(cc_toolchain, feature_configuration, crate_type, compilation_mode)
 
+
     if toolchain.target_os == "windows":
         make_link_flags = _make_link_flags_windows_msvc if toolchain.target_triple.abi == "msvc" else _make_link_flags_windows_gnu
         get_lib_name = get_lib_name_for_windows
@@ -2196,6 +2200,9 @@ def _add_native_link_flags(args, dep_info, linkstamp_outs, ambiguous_libs, crate
     if crate_type in ["dylib", "cdylib"]:
         # For shared libraries we want to link C++ runtime library dynamically
         # (for example libstdc++.so or libc++.so).
+        if toolchain.target_os == "emscripten":
+            args.add("-Clink-args=--no-entry")
+
         args.add_all(
             cc_toolchain.dynamic_runtime_lib(feature_configuration = feature_configuration),
             map_each = _get_dirname,

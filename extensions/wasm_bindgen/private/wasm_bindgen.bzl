@@ -22,6 +22,7 @@ def rust_wasm_bindgen_action(*, ctx, toolchain, wasm_file, target_output, flags 
     """
     bindgen_bin = toolchain.bindgen
 
+    print("wasm file: {}".format(wasm_file))
     # Since the `wasm_file` attribute is behind a transition, it will be converted
     # to a list.
     if len(wasm_file) == 1:
@@ -34,18 +35,22 @@ def rust_wasm_bindgen_action(*, ctx, toolchain, wasm_file, target_output, flags 
                 supported_types = ["cdylib", "bin"]
                 if crate_info.type not in supported_types:
                     fail("The target '{}' is not a supported type: {}".format(
-                        ctx.attr.crate.label,
+                        target.label,
                         supported_types,
                     ))
 
             progress_message_label = target.label
             input_file = crate_info.output
+            print("wasm file2: {}".format(input_file))
+            print("crate_info: ", dir(crate_info))
+            print("wasm file3: ", target.files.to_list())
         else:
             wasm_files = wasm_file[0][DefaultInfo].files.to_list()
             if len(wasm_files) != 1:
                 fail("Unexpected number of wasm files: {}".format(wasm_files))
 
             progress_message_label = wasm_files[0].path
+            print("wasm files: {}".format(wasm_files))
             input_file = wasm_files[0]
     else:
         fail("wasm_file is expected to be a transitioned label attr on `{}`. Got `{}`".format(
